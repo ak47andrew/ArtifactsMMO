@@ -3,8 +3,6 @@ from typing import Any
 from os import getenv
 
 BASE_URL = "https://api.artifactsmmo.com"
-
-
 JSON_TYPE = dict[str, Any]
 
 
@@ -31,10 +29,12 @@ async def make_request(uri: str, method: str = "GET", **data: JSON_TYPE) -> JSON
     headers = {
         "Authorization": f"Bearer {getenv('ARTIFACTS_MMO_TOKEN')}",
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "Accept": "application/json",
     }
 
     async with aiohttp.ClientSession() as session:
-        async with session.request(method, f"{BASE_URL}{uri}", headers=headers, json=data) as response:
+        async with session.request(
+            method, f"{BASE_URL}{uri}", headers=headers, json=data
+        ) as response:
             response.raise_for_status()  # Raise an exception for 4xx or 5xx status codes
             return (await response.json())["data"]

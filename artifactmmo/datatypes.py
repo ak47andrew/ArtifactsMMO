@@ -82,9 +82,9 @@ class Point2D:
         Returns:
             float: The distance from the point to the origin.
         """
-        return (self.x ** 2 + self.y ** 2) ** 0.5
+        return (self.x**2 + self.y**2) ** 0.5
 
-    def __add__(self, other: 'Point2D') -> 'Point2D':
+    def __add__(self, other: "Point2D") -> "Point2D":
         """
         Adds two points together, effectively translating one point by the other.
 
@@ -96,7 +96,7 @@ class Point2D:
         """
         return Point2D(self.x + other.x, self.y + other.y)
 
-    def __sub__(self, other: 'Point2D') -> 'Point2D':
+    def __sub__(self, other: "Point2D") -> "Point2D":
         """
         Subtracts one point from another, effectively finding the vector between them.
 
@@ -108,7 +108,7 @@ class Point2D:
         """
         return Point2D(self.x - other.x, self.y - other.y)
 
-    def translate(self, dx: int, dy: int) -> 'Point2D':
+    def translate(self, dx: int, dy: int) -> "Point2D":
         """
         Translates the point by a specified amount.
 
@@ -121,7 +121,7 @@ class Point2D:
         """
         return Point2D(self.x + dx, self.y + dy)
 
-    def manhattan_distance_to(self, other: 'Point2D') -> int:
+    def manhattan_distance_to(self, other: "Point2D") -> int:
         """
         Gets the Manhattan distance (L1 distance) between two points.
 
@@ -133,7 +133,7 @@ class Point2D:
         """
         return abs(self.x - other.x) + abs(self.y - other.y)
 
-    def euclidean_distance_to(self, other: 'Point2D') -> float:
+    def euclidean_distance_to(self, other: "Point2D") -> float:
         """
         Gets the Euclidean distance (L2 distance) between two points.
 
@@ -236,18 +236,17 @@ class Equipment:
         self.artifact2 = json_data["artifact2_slot"]
         self.artifact3 = json_data["artifact3_slot"]
         self.utility1 = GeneralItem(
-            slot=json_data["utility1_slot"], 
+            slot=json_data["utility1_slot"],
             code="",  # TODO ??? Docs is kinda sucks
-            quantity=json_data["utility1_slot_quantity"]
+            quantity=json_data["utility1_slot_quantity"],
         )
         self.utility2 = GeneralItem(
-            slot=json_data["utility2_slot"], 
+            slot=json_data["utility2_slot"],
             code="",
-            quantity=json_data["utility2_slot_quantity"]
+            quantity=json_data["utility2_slot_quantity"],
         )
 
         return self
-
 
 
 @dataclass
@@ -306,10 +305,9 @@ class CharacterData:
         self.task = InGameTask.from_json(data)
 
         self.equipment = Equipment.from_json(data)
-        self.inventory = [GeneralItem(
-            slot=item["slot"],
-            code=item["code"],
-            quantity=item["quantity"]
-        ) for item in data["inventory"]]
+        self.inventory = [
+            GeneralItem(slot=item["slot"], code=item["code"], quantity=item["quantity"])
+            for item in data["inventory"]
+        ]
 
         return self

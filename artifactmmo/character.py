@@ -29,8 +29,13 @@ class Task:
     cooldown: int
     callback: TASK_CALLBACK_TYPE
 
-    def __init__(self, url: str, method: str = "POST", 
-                 callback: TASK_CALLBACK_TYPE = None, **params: JSON_TYPE):
+    def __init__(
+        self,
+        url: str,
+        method: str = "POST",
+        callback: TASK_CALLBACK_TYPE = None,
+        **params: JSON_TYPE,
+    ):
         """
         Initialize a new Task instance.
 
@@ -45,7 +50,9 @@ class Task:
 
         # Initialize cooldown to -1 (unset) before execution
         self.cooldown = -1
-        self.character: Optional[CharacterData] = None  # Character data will be set after execution
+        self.character: Optional[CharacterData] = (
+            None  # Character data will be set after execution
+        )
         self.payload: JSON_TYPE = {}  # Additional response data
 
     async def execute(self):
@@ -117,13 +124,9 @@ class Character:
 
         # Fetch initial character data from the API
         data: list[JSON_TYPE] = await make_request(f"/my/characters")  # type: ignore
-        self.character_data = \
-            next(
-                filter(
-                    lambda char: char["name"] == self.name,
-                    data
-                )
-            )  # Find the character data matching the name
+        self.character_data = next(
+            filter(lambda char: char["name"] == self.name, data)
+        )  # Find the character data matching the name
 
     async def run_task(self):
         """
@@ -144,7 +147,9 @@ class Character:
             self.character_data = task.character
 
         if task.callback is not None:  # Check if the task has a callback function
-            task.callback(self, task.payload)  # Call the callback function with character and payload data
+            task.callback(
+                self, task.payload
+            )  # Call the callback function with character and payload data
 
         if task.cooldown > 0:  # Check if the task has a cooldown
             self.on_cooldown = True  # Set cooldown flag
