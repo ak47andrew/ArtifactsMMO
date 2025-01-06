@@ -1,6 +1,7 @@
 import aiohttp
 from typing import Any
-from credentials import TOKEN
+from os import getenv
+
 BASE_URL = "https://api.artifactsmmo.com"
 
 
@@ -28,7 +29,7 @@ async def make_request(uri: str, method: str = "GET", **data: JSON_TYPE) -> JSON
     {<They all so f$%*ing long and boring, so... check out docs for yourself: https://api.artifactsmmo.com/docs/#/>}
     """
     headers = {
-        "Authorization": f"Bearer {TOKEN}",
+        "Authorization": f"Bearer {getenv('ARTIFACTS_MMO_TOKEN')}",
         "Content-Type": "application/json",
         "Accept": "application/json"
     }
