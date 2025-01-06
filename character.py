@@ -1,7 +1,10 @@
 from asyncio import sleep
-from typing import Optional
+from typing import Optional, Callable
 from networking import JSON_TYPE, make_request
 from datatypes import CharacterData
+
+
+TASK_CALLBACK_TYPE = Optional[Callable[["Character", JSON_TYPE], None]]
 
 
 class Task:
@@ -24,8 +27,10 @@ class Task:
     """
 
     cooldown: int
+    callback: TASK_CALLBACK_TYPE
 
-    def __init__(self, url: str, method: str = "POST", **params: JSON_TYPE):
+    def __init__(self, url: str, method: str = "POST", 
+                 callback: TASK_CALLBACK_TYPE = None, **params: JSON_TYPE):
         """
         Initialize a new Task instance.
 
@@ -36,6 +41,7 @@ class Task:
         self.url = url
         self.method = method
         self.params = params
+        self.callback = callback  # Set default callback if not provided
 
         # Initialize cooldown to -1 (unset) before execution
         self.cooldown = -1
@@ -137,7 +143,8 @@ class Character:
         if task.character is not None:  # Update character data if provided by the task
             self.character_data = task.character
 
-        # TODO: Implement callbacks or similar functionality for payload handling
+        if task.callback is not None:  # Check if the task has a callback function
+            task.callback(self, task.payload)  # Call the callback function with character and payload data
 
         if task.cooldown > 0:  # Check if the task has a cooldown
             self.on_cooldown = True  # Set cooldown flag

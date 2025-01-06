@@ -9,5 +9,8 @@
         "credentials.py": true,
     },
     "python.analysis.typeCheckingMode": "strict",
-    "python.analysis.autoImportCompletions": true
+    "python.analysis.autoImportCompletions": true,
+    "material-icon-theme.folders.associations": {
+        "artifactmmo": "src"
+    }
 }
