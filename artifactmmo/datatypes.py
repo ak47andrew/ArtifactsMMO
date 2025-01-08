@@ -201,6 +201,13 @@ class GeneralItem:
     code: str
     quantity: int
 
+    def to_json(self) -> JSON_TYPE:
+        return {
+            "slot": self.slot,
+            "code": self.code,
+            "quantity": self.quantity,
+        }
+
 
 @dataclass
 class Equipment:

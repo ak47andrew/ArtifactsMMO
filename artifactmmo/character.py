@@ -1,7 +1,7 @@
 from asyncio import sleep
 from typing import Optional, Callable
 from networking import JSON_TYPE, make_request
-from datatypes import CharacterData
+from .datatypes import CharacterData, Point2D, GeneralItem
 
 
 TASK_CALLBACK_TYPE = Optional[Callable[["Character", JSON_TYPE], None]]
@@ -34,7 +34,7 @@ class Task:
         url: str,
         method: str = "POST",
         callback: TASK_CALLBACK_TYPE = None,
-        **params: JSON_TYPE,
+        params: Optional[JSON_TYPE] = None,
     ):
         """
         Initialize a new Task instance.
@@ -45,7 +45,7 @@ class Task:
         """
         self.url = url
         self.method = method
-        self.params = params
+        self.params = params or {}  # Set default parameters if not provided
         self.callback = callback  # Set default callback if not provided
 
         # Initialize cooldown to -1 (unset) before execution
@@ -156,7 +156,7 @@ class Character:
             await sleep(task.cooldown)  # Wait for the cooldown period
             self.on_cooldown = False  # Clear cooldown flag
 
-    async def add_task(self, task: Task):
+    def add_task(self, task: Task):
         """
         Add a new task to the character's task queue.
 
@@ -164,3 +164,187 @@ class Character:
         :return: None
         """
         self.tasks.append(task)  # Add the task to the end of the queue
+
+    # Actions
+    def _make_action(
+        self,
+        action: str,
+        params: Optional[JSON_TYPE] = None,
+        callback: TASK_CALLBACK_TYPE = None,
+    ) -> None:
+        self.add_task(
+            Task(
+                f"/my/{self.name}/action/{action}",
+                method="POST",
+                callback=callback,
+                params=params,
+            )
+        )
+
+    def move(self, position: Point2D, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("move", {"x": position.x, "y": position.y}, callback=callback)
+
+    def rest(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("rest", callback=callback)
+
+    def equip_item(
+        self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action("equip", item.to_json(), callback=callback)
+
+    def unequip_item(
+        self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "unequip",
+            {
+                "slot": item.slot,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def use_item(self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action(
+            "use",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def fight(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("fight", callback=callback)
+
+    def gathering(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("gathering", callback=callback)
+
+    def crafting(self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action(
+            "crafting",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def deposit_bank_gold(
+        self, quantity: int, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "bank/deposit/gold", {"quantity": quantity}, callback=callback
+        )
+
+    def withdraw_bank_gold(
+        self, quantity: int, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "bank/withdraw/gold", {"quantity": quantity}, callback=callback
+        )
+
+    def depost_bank_item(
+        self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "bank/deposit",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def withdraw_bank(
+        self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "bank/withdraw",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def buy_bank_extansion(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("bank/buy_expansion", callback=callback)
+
+    def recycling(self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action(
+            "recycling",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def ge_buy(
+        self, order_id: str, quantity: int, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "grandexchange/buy",
+            {"id": order_id, "quantity": quantity},
+            callback=callback,
+        )
+
+    def ge_create_sell_order(
+        self, item: GeneralItem, price: int, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "grandexchange/create_sell_order",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+                "price": price,
+            },
+            callback=callback,
+        )
+
+    def ge_cancel_sell_order(
+        self, order_id: str, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "grandexchange/cancel_sell_order", {"id": order_id}, callback=callback
+        )
+
+    def complete_ingame_task(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("task/complete", callback=callback)
+
+    def ingame_task_exchange(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("task/exchange", callback=callback)
+
+    def ingame_task_accept_new(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("task/new", callback=callback)
+
+    def ingame_task_trade(
+        self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "task/trade",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
+
+    def ingame_task_cancel(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("task/cancel", callback=callback)
+
+    def christmas_exchange(self, callback: TASK_CALLBACK_TYPE = None) -> None:
+        self._make_action("christmas/exchange", callback=callback)
+
+    def delete_item(
+        self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
+    ) -> None:
+        self._make_action(
+            "inventory/delete",
+            {
+                "code": item.code,
+                "quantity": item.quantity,
+            },
+            callback=callback,
+        )
