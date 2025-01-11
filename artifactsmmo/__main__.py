@@ -1,10 +1,11 @@
 from typing import Optional
 import aiohttp
 import aiohttp.client_exceptions
-from artifactmmo.character import Character
-from artifactmmo.datatypes import GeneralItem, Point2D
-from artifactmmo.networking import JSON_TYPE
+from artifactsmmo.character import Character
+from artifactsmmo.datatypes import GeneralItem, Point2D
+from artifactsmmo.networking import JSON_TYPE
 import asyncio
+from os import getenv
 
 def get_amount_by_code(character: Character, code: str) -> int:
     for item in character.character_data.inventory:
@@ -230,13 +231,15 @@ def run_main():
 
 
 async def async_main():
-    await asyncio.gather(
-        fighter("Ash_fight"),
-        fishing("un_fishing"),
-        alchemy("vondi_alchem"),
-        woodcutting("woodie_wood"),
-        mining("lilGirl_mine")
-    )
+    players = []
+    players.extend([fighter(name) for name in getenv("FIGHTER_LIST", "").split(",")])  # type: ignore
+    players.extend([fishing(name) for name in getenv("FISHING_LIST", "").split(",")])  # type: ignore
+    players.extend([alchemy(name) for name in getenv("ALCHEMY_LIST", "").split(",")])  # type: ignore
+    players.extend([woodcutting(name) for name in getenv("WOODCUTTING_LIST", "").split(",")])  # type: ignore
+    players.extend([mining(name) for name in getenv("MINING_LIST", "").split(",")])  # type: ignore
+    print("Starting players...")
+    print(players)  # type: ignore
+    await asyncio.gather(*players)  # type: ignore
 
 
 if __name__ == "__main__":
