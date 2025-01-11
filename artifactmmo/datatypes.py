@@ -1,6 +1,6 @@
 from typing import Optional, Self
 from dataclasses import dataclass
-from networking import JSON_TYPE
+from .networking import JSON_TYPE
 
 
 @dataclass
@@ -197,9 +197,9 @@ class Skill:
 
 @dataclass
 class GeneralItem:
-    slot: str
-    code: str
     quantity: int
+    slot: str = ""
+    code: str = ""
 
     def to_json(self) -> JSON_TYPE:
         return {
@@ -301,7 +301,7 @@ class CharacterData:
         self.fishing = Skill.from_json(data, "fishing_")
         self.weaponcrafting = Skill.from_json(data, "weaponcrafting_")
         self.gearcrafting = Skill.from_json(data, "gearcrafting_")
-        self.jewlercrafting = Skill.from_json(data, "jewlercrafting_")
+        self.jewlercrafting = Skill.from_json(data, "jewelrycrafting_")
         self.cooking = Skill.from_json(data, "cooking_")
         self.alchemy = Skill.from_json(data, "alchemy_")
 

@@ -1,10 +1,17 @@
 from asyncio import sleep
 from typing import Optional, Callable
-from networking import JSON_TYPE, make_request
+from .networking import JSON_TYPE, make_request
 from .datatypes import CharacterData, Point2D, GeneralItem
 
 
 TASK_CALLBACK_TYPE = Optional[Callable[["Character", JSON_TYPE], None]]
+
+
+class LoggerLevels:
+    DEBUG = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
 
 
 class Task:
@@ -101,14 +108,16 @@ class Character:
     on_cooldown: bool = False  # Flag to indicate if the character is on cooldown
     tasks: list[Task]  # List of tasks for the character
     character_data: CharacterData  # Character's data, updated after task execution
+    logging_level: int
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, logging_level: int = LoggerLevels.INFO):
         """
         Initialize a new Character instance.
 
         :param name: The name of the character.
         """
         self.name = name
+        self.logging_level = logging_level
 
     async def init(self):
         """
@@ -124,9 +133,12 @@ class Character:
 
         # Fetch initial character data from the API
         data: list[JSON_TYPE] = await make_request(f"/my/characters")  # type: ignore
-        self.character_data = next(
+        self.character_data = CharacterData.from_json(next(
             filter(lambda char: char["name"] == self.name, data)
-        )  # Find the character data matching the name
+        ))  # Find the character data matching the name
+    
+    def log(self, level: str, message: str):
+        print(f"[{level}] [{self.name}] {message}")
 
     async def run_task(self):
         """
@@ -156,6 +168,10 @@ class Character:
             await sleep(task.cooldown)  # Wait for the cooldown period
             self.on_cooldown = False  # Clear cooldown flag
 
+    async def run_all(self):
+        while len(self.tasks) != 0:
+            await self.run_task()
+
     def add_task(self, task: Task):
         """
         Add a new task to the character's task queue.
@@ -183,14 +199,20 @@ class Character:
 
     def move(self, position: Point2D, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("move", {"x": position.x, "y": position.y}, callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Moving to {position}")
 
     def rest(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("rest", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Resting")
 
     def equip_item(
         self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
     ) -> None:
         self._make_action("equip", item.to_json(), callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Equipping {item}")
 
     def unequip_item(
         self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
@@ -203,6 +225,8 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Unequipping {item}")
 
     def use_item(self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action(
@@ -213,12 +237,18 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Using {item}")
 
     def fight(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("fight", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Fighting")
 
     def gathering(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("gathering", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Gathering")
 
     def crafting(self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action(
@@ -229,6 +259,8 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Crafting {item}")
 
     def deposit_bank_gold(
         self, quantity: int, callback: TASK_CALLBACK_TYPE = None
@@ -236,6 +268,8 @@ class Character:
         self._make_action(
             "bank/deposit/gold", {"quantity": quantity}, callback=callback
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Depositing {quantity} gold into bank")
 
     def withdraw_bank_gold(
         self, quantity: int, callback: TASK_CALLBACK_TYPE = None
@@ -243,6 +277,8 @@ class Character:
         self._make_action(
             "bank/withdraw/gold", {"quantity": quantity}, callback=callback
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Withdrawing {quantity} gold from bank")
 
     def depost_bank_item(
         self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
@@ -255,6 +291,8 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Depositing {item} into bank")
 
     def withdraw_bank(
         self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
@@ -267,9 +305,13 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Withdrawing {item} from bank")
 
     def buy_bank_extansion(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("bank/buy_expansion", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Buying bank expansion")
 
     def recycling(self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action(
@@ -280,6 +322,8 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Recycling {item}")
 
     def ge_buy(
         self, order_id: str, quantity: int, callback: TASK_CALLBACK_TYPE = None
@@ -289,6 +333,8 @@ class Character:
             {"id": order_id, "quantity": quantity},
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Buying {quantity} id={order_id} from GE")
 
     def ge_create_sell_order(
         self, item: GeneralItem, price: int, callback: TASK_CALLBACK_TYPE = None
@@ -302,6 +348,8 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Creating sell order for {item.quantity} at price={price} from GE")
 
     def ge_cancel_sell_order(
         self, order_id: str, callback: TASK_CALLBACK_TYPE = None
@@ -309,15 +357,23 @@ class Character:
         self._make_action(
             "grandexchange/cancel_sell_order", {"id": order_id}, callback=callback
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Cancelling sell order id={order_id} from GE")
 
     def complete_ingame_task(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("task/complete", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Completed ingame task")
 
     def ingame_task_exchange(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("task/exchange", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Exchanging ingame task")
 
     def ingame_task_accept_new(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("task/new", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Accepting new ingame task")
 
     def ingame_task_trade(
         self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
@@ -330,21 +386,29 @@ class Character:
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Trading {item} with ingame task")
 
     def ingame_task_cancel(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("task/cancel", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Cancelling ingame task")
 
     def christmas_exchange(self, callback: TASK_CALLBACK_TYPE = None) -> None:
         self._make_action("christmas/exchange", callback=callback)
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", "Exchanging Christmas items")
 
     def delete_item(
         self, item: GeneralItem, callback: TASK_CALLBACK_TYPE = None
     ) -> None:
         self._make_action(
-            "inventory/delete",
+            "delete",
             {
                 "code": item.code,
                 "quantity": item.quantity,
             },
             callback=callback,
         )
+        if self.logging_level <= LoggerLevels.INFO:
+            self.log("INFO", f"Deleting {item}")
