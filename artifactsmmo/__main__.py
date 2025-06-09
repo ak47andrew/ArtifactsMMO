@@ -26,13 +26,10 @@ def clear_invertory(character: Character, exceptions: Optional[list[str]] = None
 
 
 def is_inventory_full(character: Character) -> bool:
-    is_all_items = True
+    total = 0
     for item in character.character_data.inventory:
-        if item.quantity == 100:
-            return True
-        if item.code == "":
-            is_all_items = False
-    return is_all_items
+        total += item.quantity
+    return total >= 100
 
 
 def safe_full_delete(character: Character, code: str):
